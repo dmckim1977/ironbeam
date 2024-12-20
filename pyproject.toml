@@ -9,6 +9,8 @@ authors = [
 requires-python = ">=3.11"
 dependencies = [
     "httpx>=0.28.1",
+    "tool>=0.8.0",
+    "treelib>=1.7.0",
 ]
 
 [project.scripts]
@@ -24,5 +26,6 @@ dev = [
     "pytest>=8.3.4",
     "python-dotenv>=1.0.1",
     "ruff>=0.8.4",
+    "sphinx-rtd-theme>=3.0.2",
     "sphinx>=8.1.3",
 ]

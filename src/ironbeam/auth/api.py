@@ -15,9 +15,9 @@ class Auth:
 
     # TODO: Need to implement for Tenant users.
 
-    :param some_param: Description
-
-    :return:
+    Args:
+        username (str): The IronBeam API username
+        apikey (str): The IronBeam API key
 
     Examples
     --------
@@ -51,6 +51,9 @@ class Auth:
 
         self.demo_url: str = "https://demo.ironbeamapi.com/v2/auth"
         self.live_url: str = "https://live.ironbeamapi.com/v2/auth"
+
+        self.demo_logout: str = "https://demo.ironbeamapi.com/v2/logout"
+        self.live_logout: str = "https://live.ironbeamapi.com/v2/logout"
 
         self.__token: str | None = None
 
@@ -111,7 +114,7 @@ class Auth:
             return res["token"]
 
         except httpx.HTTPError as exc:
-            print(f"Error while requesting {exc.request.url!r}.")
+            logger.error(f"Error while requesting {exc.request.url!r}.")
             return {"error": "token could not be authenticated."}
 
     def save_token(self, filepath: Optional[str] = "ironbeam_token.json") -> None:
@@ -131,3 +134,28 @@ class Auth:
                 logger.info(f"Token saved to {filepath}")
         except IOError as exc:
             logger.error(f"Error while saving token to {filepath} {exc}")
+
+    def logout(self, token: Optional[str] = None) -> None:
+        """Logs out the token."""
+
+        if self.__token is None and token is None:
+            raise ValueError("No token provided")
+
+        # Set url depending on mode
+        if self.__mode == 'live':
+            url = self.live_logout
+        elif self.__mode == 'demo':
+            url = self.demo_logout
+
+        params = {"token": self.__token if token is None else token}
+
+        try:
+            res = httpx.post(url=url, params=params).raise_for_status().json()
+
+            if res['status'] == "OK":
+                logger.info(f"Logout successful. {res}")
+            else:
+                logger.warning(f"Logout failed. {res['status']}: {res['message']}")
+
+        except httpx.HTTPError as exc:
+            logger.info(f"Error while logging out {exc.request.url!r}.")

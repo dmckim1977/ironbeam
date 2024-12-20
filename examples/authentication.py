@@ -20,4 +20,6 @@ token = auth.authorize()
 print(token)
 print(auth.token)
 
-auth.save_token()
+# auth.save_token()
+
+auth.logout()
