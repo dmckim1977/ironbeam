@@ -15,4 +15,10 @@ wheels/
 # Pycharm
 **.idea
 
+# Development Files
+DEV_README.md
+check.sh
+**.json
 
+# Sphinx documentation
+docs/_build/
