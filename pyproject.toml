@@ -1,0 +1,17 @@
+[project]
+name = "ironbeam"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "David Mckim", email = "davidmckim@gmail.com" }
+]
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+ironbeam = "ironbeam:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
