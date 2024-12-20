@@ -1,10 +1,10 @@
 import logging
 
 from ironbeam.auth.api import Auth
-from ironbeam.historical.client import Historical
+from ironbeam.base import Ironbeam
 
 __all__ = [
-    "Historical",
+    "Ironbeam",
     "Auth",
 ]
 

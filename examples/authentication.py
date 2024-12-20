@@ -9,17 +9,16 @@ load_dotenv()
 
 logging.basicConfig(level=logging.DEBUG)
 
-auth = ib.Auth(username=os.getenv("IRONBEAM_USERNAME"),
+client = ib.Ironbeam()
+
+print(client.apikey)
+
+client.authorize(username=os.getenv("IRONBEAM_USERNAME"),
                apikey=os.getenv("IRONBEAM_APIKEY"))
 
-print(auth.username)
-print(auth.apikey)
+print(client.token)
 
-token = auth.authorize()
-
-print(token)
-print(auth.token)
 
 # auth.save_token()
 
-auth.logout()
+# client.logout()
