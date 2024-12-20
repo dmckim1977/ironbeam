@@ -14,7 +14,10 @@ auth = ib.Auth(username=os.getenv("IRONBEAM_USERNAME"),
 
 print(auth.username)
 print(auth.apikey)
+
 token = auth.authorize()
+
 print(token)
 print(auth.token)
+
 auth.save_token()

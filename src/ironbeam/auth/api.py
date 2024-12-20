@@ -19,7 +19,20 @@ class Auth:
 
     :return:
 
-    :Examples
+    Examples
+    --------
+    >>> import os
+    >>> from dotenv import load_dotenv
+    >>> load_dotenv()
+    True
+    >>> auth = Auth(username=os.getenv("IRONBEAM_USERNAME"),
+    ...            apikey=os.getenv("IRONBEAM_APIKEY"))
+    >>> auth.username == os.getenv("IRONBEAM_USERNAME")
+    True
+    >>> token = auth.authorize()  # doctest: +SKIP
+    >>> auth.token is not None  # doctest: +SKIP
+    True
+    >>> auth.save_token()  # doctest: +SKIP
     """
 
     MODE = Literal['demo', 'live']
