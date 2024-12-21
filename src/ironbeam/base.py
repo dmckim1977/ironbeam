@@ -1,38 +1,28 @@
-import json
 import logging
 from typing import Literal, Optional
 
-import httpx
+from .auth import Auth
+from .market import Market
 
 logger = logging.getLogger(__name__)
 
-
 class Ironbeam:
-    """Provides a client class for requesting historical data from Ironbeam's API.
-
-    `password` and `apikey` are the same.
-    The API Key is used as a password in the request.
-
-    # TODO: Need to implement for Tenant users.
+    """Provides a client class for interacting with Ironbeam's API.
 
     Args:
-        username (str): The IronBeam API username
-        apikey (str): The IronBeam API key
+        apikey: The IronBeam API key
+        mode: The API mode ("demo" or "live")
+        api_secret: Optional API secret for tenant users
 
-    Examples
-    --------
-    >>> import os
-    >>> from dotenv import load_dotenv
-    >>> load_dotenv()
-    True
-    >>> auth = Auth(username=os.getenv("IRONBEAM_USERNAME"),
-    ...            apikey=os.getenv("IRONBEAM_APIKEY"))
-    >>> auth.username == os.getenv("IRONBEAM_USERNAME")
-    True
-    >>> token = auth.authorize()  # doctest: +SKIP
-    >>> auth.token is not None  # doctest: +SKIP
-    True
-    >>> auth.save_token()  # doctest: +SKIP
+    Examples:
+        >>> import os
+        >>> from dotenv import load_dotenv
+        >>> load_dotenv()
+        True
+        >>> client = Ironbeam(apikey=os.getenv("IRONBEAM_APIKEY"))
+        >>> client.authorize(username=os.getenv("IRONBEAM_USERNAME"))
+        >>> print(client.token is not None)
+        True
     """
 
     MODE = Literal['demo', 'live']
@@ -43,114 +33,67 @@ class Ironbeam:
             mode: Optional[MODE] = "demo",
             api_secret: Optional[str] = None,
     ):
-        self.__api_secret = api_secret
-        self.__apikey = apikey
-        self.__mode = mode
-        self._streamid: str | None = None
+        self._apikey = apikey
+        self._mode = mode
+        self._api_secret = api_secret
+        self._auth = Auth(mode=mode)
+        self._market = Market(mode=mode)
+        self.__token: Optional[str] = None
 
-        self.demo_auth_url: str = "https://demo.ironbeamapi.com/v2/auth"
-        self.live_auth_url: str = "https://live.ironbeamapi.com/v2/auth"
+    def __enter__(self):
+        return self
 
-        self.demo_base_url: str = "https://demo.ironbeamapi.com/v2/logout"
-        self.live_base_url: str = "https://live.ironbeamapi.com/v2/logout"
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.__token:
+            try:
+                self.logout()
+            except Exception as e:
+                logger.error(f"Error during logout: {e}")
 
-        self.__token: str | None = None
+    def authorize(self, username: str, apikey: Optional[str] = None) -> 'Ironbeam':
+        """Authorize with the Ironbeam API.
+
+        Args:
+            username: The IronBeam username
+            apikey: Optional API key (overrides the one provided at initialization)
+
+        Returns:
+            self: Returns the client instance for method chaining
+
+        Raises:
+            httpx.HTTPError: If the authorization request fails
+        """
+        apikey = apikey or self._apikey
+        if not apikey:
+            raise ValueError("No API key provided")
+
+        self.__token = self._auth.authorize(username=username, apikey=apikey)
+        return self
+
+    def logout(self) -> None:
+        """Logout and invalidate the current token.
+
+        Raises:
+            ValueError: If no token exists
+            httpx.HTTPError: If the logout request fails
+        """
+        if not self.__token:
+            raise ValueError("No token to invalidate")
+
+        self._auth.logout(token=self.__token)
+        self.__token = None
 
     @property
-    def apikey(self) -> str:
-        return self.__apikey
-
-    @property
-    def api_secret(self) -> str | None:
-        if self.__api_secret is None:
-            logging.error("No API secret provided")
-        return self.__api_secret
-
-    @property
-    def mode(self) -> str | None:
-        return self.__mode
-
-    @property
-    def token(self) -> str:
-        """Create token if it doesn't exist"""
-        if self.__token is None:
-            self.authorize()
-            assert self.__token is not None
+    def token(self) -> Optional[str]:
+        """The current authorization token."""
         return self.__token
 
-    def authorize(self, username: str, apikey: str) -> str:
-        """
+    @property
+    def mode(self) -> Optional[str]:
+        """The current API mode."""
+        return self._mode
 
-        :return: Returns the api token.
-        """
-
-        payload = {
-            "Username": username,
-            "ApiKey": apikey,
-        }
-
-        headers = {"Content-Type": "application/json"}
-
-        # Set url depending on mode
-        if self.__mode == 'live':
-            url = self.live_auth_url
-        elif self.__mode == 'demo':
-            url = self.demo_auth_url
-
-        try:
-            res = httpx.post(
-                url=url, json=payload, headers=headers
-            ).raise_for_status().json()
-
-            logger.info(f"Authorization successful. Token: {res['token']}")
-
-            self.__token = res['token']
-
-            return self
-
-        except httpx.HTTPError as exc:
-            logger.error(f"Error while requesting {exc.request.url!r}.")
-            return self
-
-    def save_token(self, filepath: Optional[str] = "ironbeam_token.json") -> None:
-        """
-        Saves the token to the given filepath.
-
-        :param self:
-        :param filepath:
-        :return:
-        """
-
-        try:
-            with open(filepath, "w") as f:
-                json.dump({"token": self.__token}, f)
-                f.flush()
-
-                logger.info(f"Token saved to {filepath}")
-        except IOError as exc:
-            logger.error(f"Error while saving token to {filepath} {exc}")
-
-    def logout(self, token: Optional[str] = None) -> None:
-        """Logs out the token."""
-
-        if self.__token is None and token is None:
-            raise ValueError("No token provided")
-
-        # Set url depending on mode
-        if self.__mode == 'live':
-            url = self.live_base_url
-        elif self.__mode == 'demo':
-            url = self.demo_base_url
-
-        params = {"token": self.__token if token is None else token}
-
-        try:
-            res = httpx.post(url=url, params=params).raise_for_status().json()
-
-            if res['status'] == "OK":
-                logger.info(f"Logout successful. {res}")
-            else:
-                logger.warning(f"Logout failed. {res['status']}: {res['message']}")
-
-        except httpx.HTTPError as exc:
-            logger.info(f"Error while logging out {exc.request.url!r}.")
+    @property
+    def market(self) -> Market:
+        """Access market data endpoints."""
+        return self._market

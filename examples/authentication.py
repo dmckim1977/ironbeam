@@ -9,16 +9,15 @@ load_dotenv()
 
 logging.basicConfig(level=logging.DEBUG)
 
-client = ib.Ironbeam()
-
-print(client.apikey)
-
-client.authorize(username=os.getenv("IRONBEAM_USERNAME"),
-               apikey=os.getenv("IRONBEAM_APIKEY"))
-
+# # Basic usage
+client = ib.Ironbeam(apikey=os.getenv("IRONBEAM_APIKEY"))
+client.authorize(username=os.getenv("IRONBEAM_USERNAME"))
 print(client.token)
+# Use client...
+client.logout()
 
-
-# auth.save_token()
-
-# client.logout()
+# # Context manager usage
+# with ib.Ironbeam(apikey=os.getenv("IRONBEAM_APIKEY")) as client:
+#     client.authorize(username=os.getenv("IRONBEAM_USERNAME"))
+#     # Use client...
+#     # Auto logout on exit

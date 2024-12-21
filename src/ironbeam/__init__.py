@@ -1,11 +1,12 @@
 import logging
 
-from ironbeam.auth.api import Auth
+import exceptions
+from ironbeam import auth
 from ironbeam.base import Ironbeam
 
 __all__ = [
     "Ironbeam",
-    "Auth",
+    "auth",
 ]
 
 # Setup logging
