@@ -1,8 +1,10 @@
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
 from pydantic import BaseModel, Field, validator
+
+from ironbeam.exceptions import IronbeamResponseError
 
 
 class Quote(BaseModel):
@@ -79,3 +81,117 @@ class QuoteRequest(BaseModel):
                 raise ValueError(
                     f"Invalid symbol format: {symbol}. Expected format: EXCHANGE:SYMBOL.CONTRACTCODE")
         return v
+
+
+class DepthLevel(BaseModel):
+    """Individual level in the depth of market."""
+    level: int = Field(..., alias='l')
+    timestamp: int = Field(..., alias='t')
+    side: str = Field(..., alias='s')  # 'B' for bid, 'A' for ask
+    price: float = Field(..., alias='p')
+    orders: int = Field(..., alias='o')
+    size: float = Field(..., alias='sz')
+    implied_orders: Optional[int] = Field(None, alias='ioc')
+    implied_size: Optional[float] = Field(None, alias='is')
+
+    def to_dict(self):
+        """Convert to dict with human-readable timestamp."""
+        data = self.model_dump(exclude_none=True)  # Exclude fields that are None
+        if data['timestamp']:
+            data['timestamp'] = datetime.fromtimestamp(data['timestamp'] / 1000)
+        return data
+
+
+class Depth(BaseModel):
+    """Depth data for a single symbol."""
+    symbol: str = Field(..., alias='s')
+    bids: List[DepthLevel] = Field(..., alias='b')
+    asks: List[DepthLevel] = Field(..., alias='a')
+
+    def to_dataframe(self) -> pd.DataFrame:
+        """Convert depth to a pandas DataFrame."""
+        bid_data = [{'side': 'bid', **level.to_dict()} for level in self.bids]
+        ask_data = [{'side': 'ask', **level.to_dict()} for level in self.asks]
+
+        df = pd.DataFrame(bid_data + ask_data)
+        if not df.empty:
+            # Sort by price descending for bids, ascending for asks
+            df = df.sort_values(
+                by=['side', 'price'],
+                ascending=['side' == 'ask', True]
+            )
+        return df
+
+
+class DepthResponse(BaseModel):
+    """Response from the depth endpoint."""
+    depths: List[Depth] = Field(..., alias='depths')  # Changed from 'Depths'
+    status: str
+    message: str
+    error1: Optional[str] = None
+
+    @validator('status')
+    def check_status(cls, v, values):
+        if v == 'ERROR':
+            error = values.get('error1') or values.get('message')
+            raise IronbeamResponseError(status=v, message=values.get('message'),
+                                        error=error)
+        return v
+
+    def to_pandas(self) -> dict[str, pd.DataFrame]:
+        """
+        Convert depths to pandas DataFrames.
+
+        Returns:
+            dict: Symbol -> DataFrame mapping for all depth data
+        """
+        return {
+            depth.symbol: depth.to_dataframe()
+            for depth in self.depths
+        }
+
+
+class Trade(BaseModel):
+    """Individual trade data."""
+    symbol: str
+    price: float
+    size: float
+    send_time: int = Field(..., alias='sendTime')
+    tick_direction: str = Field(..., alias='tickDirection')
+    aggressor_side: str = Field(..., alias='aggressorSide')
+    trade_date: str = Field(..., alias='tradeDate')
+    total_volume: float = Field(..., alias='totalVolume')
+    change: Optional[float] = None
+    sequence_number: Optional[int] = Field(None, alias='sequenceNumber')
+    trade_id: Optional[int] = Field(None, alias='tradeId')
+
+    def to_dict(self):
+        """Convert to dict with human-readable timestamp."""
+        data = self.model_dump(exclude_none=True)  # Exclude None values
+        if data['send_time']:
+            data['send_time'] = datetime.fromtimestamp(data['send_time'] / 1000)
+        return data
+
+
+class TradesResponse(BaseModel):
+    """Response from the trades endpoint."""
+    traders: List[Trade]  # Field name from API response
+    status: str
+    message: str
+    error1: Optional[str] = None
+
+    @validator('status')
+    def check_status(cls, v, values):
+        if v == 'ERROR':
+            error = values.get('error1') or values.get('message')
+            raise IronbeamResponseError(status=v, message=values.get('message'),
+                                        error=error)
+        return v
+
+    def to_pandas(self) -> pd.DataFrame:
+        """Convert trades to a pandas DataFrame."""
+        if not self.traders:
+            return pd.DataFrame()
+
+        data = [trade.to_dict() for trade in self.traders]
+        return pd.DataFrame(data)

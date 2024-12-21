@@ -2,6 +2,7 @@ import logging
 from typing import Literal, Optional
 
 from .auth import Auth
+from .info.base import Info
 from .market import Market
 
 logger = logging.getLogger(__name__)
@@ -36,9 +37,11 @@ class Ironbeam:
         self._apikey = apikey
         self._mode = mode
         self._api_secret = api_secret
+        self.__token: Optional[str] = None
+
         self._auth = Auth(mode=mode)
         self._market = Market(mode=mode)
-        self.__token: Optional[str] = None
+        self._info = Info(mode=mode)
 
     def __enter__(self):
         return self
@@ -49,6 +52,26 @@ class Ironbeam:
                 self.logout()
             except Exception as e:
                 logger.error(f"Error during logout: {e}")
+
+    @property
+    def token(self) -> Optional[str]:
+        """The current authorization token."""
+        return self.__token
+
+    @property
+    def mode(self) -> Optional[str]:
+        """The current API mode."""
+        return self._mode
+
+    @property
+    def market(self) -> Market:
+        """Access market data endpoints."""
+        return self._market
+
+    @property
+    def info(self) -> Info:
+        """Access info endpoints."""
+        return self._info
 
     def authorize(self, username: str, apikey: Optional[str] = None) -> 'Ironbeam':
         """Authorize with the Ironbeam API.
@@ -83,17 +106,3 @@ class Ironbeam:
         self._auth.logout(token=self.__token)
         self.__token = None
 
-    @property
-    def token(self) -> Optional[str]:
-        """The current authorization token."""
-        return self.__token
-
-    @property
-    def mode(self) -> Optional[str]:
-        """The current API mode."""
-        return self._mode
-
-    @property
-    def market(self) -> Market:
-        """Access market data endpoints."""
-        return self._market

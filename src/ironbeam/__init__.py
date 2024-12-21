@@ -1,7 +1,6 @@
 import logging
 
-import exceptions
-from ironbeam import auth
+from ironbeam import auth, exceptions
 from ironbeam.base import Ironbeam
 
 __all__ = [
