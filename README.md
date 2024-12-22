@@ -3,7 +3,7 @@
 The provides an unofficial python wrapper around [Ironbeam's](https://www.ironbeam.com/) API for
 futures.
 
-**This is a work in progress and is still very uncomplete.**
+**This is a work in progress.**
 
 The API provides the following type of data.
 
