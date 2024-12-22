@@ -6,6 +6,7 @@ from ironbeam.base import Ironbeam
 __all__ = [
     "Ironbeam",
     "auth",
+    "exceptions",
 ]
 
 # Setup logging

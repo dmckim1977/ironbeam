@@ -27,8 +27,7 @@ print(f"Email: {user_info.email_address1}")
 
 # Security definitions
 security_defs = client.info.get_security_definitions(
-    symbols=["XCME:ES.H25"],
-    bearer_token=client.token
+    symbols=["XCME:ES.H25"], bearer_token=client.token
 )
 
 for definition in security_defs.security_definitions:
@@ -39,8 +38,7 @@ for definition in security_defs.security_definitions:
 
 # Margin information
 margin_info = client.info.get_security_margin(
-    symbols=["XCME:ES.H25", "XCME:NQ.H25"],
-    bearer_token=client.token
+    symbols=["XCME:ES.H25", "XCME:NQ.H25"], bearer_token=client.token
 )
 
 df = margin_info.to_pandas()

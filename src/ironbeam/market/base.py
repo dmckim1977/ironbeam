@@ -4,16 +4,23 @@ from typing import List
 import httpx
 
 from ironbeam.exceptions import IronbeamAPIError
-from ironbeam.market.models import DepthResponse, QuoteRequest, QuoteResponse, \
-    TradesResponse
+from ironbeam.literals import MODE
+from ironbeam.market.models import (
+    DepthResponse,
+    QuoteRequest,
+    QuoteResponse,
+    TradesResponse,
+)
 
 
 class Market:
     """Handles market data endpoints for Ironbeam API."""
 
-    def __init__(self, mode: str = "demo"):
+    def __init__(self, mode: MODE | None = "demo"):
         self._mode = mode
-        self.base_url = f"https://{'demo' if mode == 'demo' else 'live'}.ironbeamapi.com/v2"
+        self.base_url = (
+            f"https://{'demo' if mode == 'demo' else 'live'}.ironbeamapi.com/v2"
+        )
 
     def get_quotes(self, symbols: List[str], bearer_token: str) -> QuoteResponse:
         """
@@ -36,19 +43,17 @@ class Market:
             # Validate input
             request = QuoteRequest(symbols=symbols)
 
-            params = {
-                "symbols": request.symbols
-            }
+            params = {"symbols": request.symbols}
 
-            headers = {
-                "Authorization": f"Bearer {bearer_token}"
-            }
+            headers = {"Authorization": f"Bearer {bearer_token}"}
 
-            response = httpx.get(
-                f"{self.base_url}/market/quotes",
-                params=params,
-                headers=headers
-            ).raise_for_status().json()
+            response = (
+                httpx.get(
+                    f"{self.base_url}/market/quotes", params=params, headers=headers
+                )
+                .raise_for_status()
+                .json()
+            )
 
             # This will raise IronbeamResponseError if status is ERROR
             return QuoteResponse(**response)
@@ -79,19 +84,17 @@ class Market:
             # Validate input (reuse QuoteRequest since validation is same)
             request = QuoteRequest(symbols=symbols)
 
-            params = {
-                "symbols": request.symbols
-            }
+            params = {"symbols": request.symbols}
 
-            headers = {
-                "Authorization": f"Bearer {bearer_token}"
-            }
+            headers = {"Authorization": f"Bearer {bearer_token}"}
 
-            response = httpx.get(
-                f"{self.base_url}/market/depth",
-                params=params,
-                headers=headers
-            ).raise_for_status().json()
+            response = (
+                httpx.get(
+                    f"{self.base_url}/market/depth", params=params, headers=headers
+                )
+                .raise_for_status()
+                .json()
+            )
 
             # return response
             return DepthResponse(**response)
@@ -140,17 +143,14 @@ class Market:
             to_ms = int(to_time.timestamp() * 1000)
 
             # Build URL with path parameters
-            url = (f"{self.base_url}/market/trades/{symbol}/"
-                   f"{from_ms}/{to_ms}/{max_trades}/{str(earlier).lower()}")
+            url = (
+                f"{self.base_url}/market/trades/{symbol}/"
+                f"{from_ms}/{to_ms}/{max_trades}/{str(earlier).lower()}"
+            )
 
-            headers = {
-                "Authorization": f"Bearer {bearer_token}"
-            }
+            headers = {"Authorization": f"Bearer {bearer_token}"}
 
-            response = httpx.get(
-                url,
-                headers=headers
-            ).raise_for_status().json()
+            response = httpx.get(url, headers=headers).raise_for_status().json()
 
             # return response
             return TradesResponse(**response)

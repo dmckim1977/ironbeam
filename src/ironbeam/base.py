@@ -1,11 +1,13 @@
 import logging
-from typing import Literal, Optional
+from typing import Optional
 
-from .auth import Auth
+from .auth.base import Auth
 from .info.base import Info
-from .market import Market
+from .literals import MODE
+from .market.base import Market
 
 logger = logging.getLogger(__name__)
+
 
 class Ironbeam:
     """Provides a client class for interacting with Ironbeam's API.
@@ -25,8 +27,6 @@ class Ironbeam:
         >>> print(client.token is not None)
         True
     """
-
-    MODE = Literal['demo', 'live']
 
     def __init__(
             self,
@@ -73,7 +73,7 @@ class Ironbeam:
         """Access info endpoints."""
         return self._info
 
-    def authorize(self, username: str, apikey: Optional[str] = None) -> 'Ironbeam':
+    def authorize(self, username: str, apikey: Optional[str] = None) -> "Ironbeam":
         """Authorize with the Ironbeam API.
 
         Args:
@@ -105,4 +105,3 @@ class Ironbeam:
 
         self._auth.logout(token=self.__token)
         self.__token = None
-

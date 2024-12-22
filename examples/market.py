@@ -32,18 +32,16 @@ except ValueError as e:
     print(f"Validation error: {e}")
 
 # Get quotes response
-quotes_response = client.market.get_quotes(["XCME:NQ.H25", "XCME:ES.H25"],
-                                           bearer_token=client.token)
+quotes_response = client.market.get_quotes(
+    ["XCME:NQ.H25", "XCME:ES.H25"], bearer_token=client.token
+)
 
 # Get as pandas DataFrame with readable columns
 df = quotes_response.to_pandas()
 print(df)
 
 # Get depth for single or multiple symbols
-depth = client.market.get_depth(
-    symbols=["XCME:ES.H25"],
-    bearer_token=client.token
-)
+depth = client.market.get_depth(symbols=["XCME:ES.H25"], bearer_token=client.token)
 
 # Get as dict of DataFrames (one per symbol)
 dfs = depth.to_pandas()
@@ -60,7 +58,7 @@ trades = client.market.get_trades(
     from_time=start_time,
     to_time=end_time,
     max_trades=100,
-    bearer_token=client.token
+    bearer_token=client.token,
 )
 
 # print(trades)

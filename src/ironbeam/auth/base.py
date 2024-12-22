@@ -2,14 +2,19 @@ import logging
 
 import httpx
 
+from ironbeam.literals import MODE
+
 logger = logging.getLogger(__name__)
+
 
 class Auth:
     """Handles authentication endpoints for Ironbeam API."""
 
-    def __init__(self, mode: str = "demo"):
+    def __init__(self, mode: MODE | None = "demo"):
         self._mode = mode
-        self.base_url = f"https://{'demo' if mode == 'demo' else 'live'}.ironbeamapi.com/v2"
+        self.base_url = (
+            f"https://{'demo' if mode == 'demo' else 'live'}.ironbeamapi.com/v2"
+        )
 
     def authorize(self, username: str, apikey: str) -> str:
         """
@@ -32,13 +37,13 @@ class Auth:
 
         headers = {"Content-Type": "application/json"}
 
-        response = httpx.post(
-            f"{self.base_url}/auth",
-            json=payload,
-            headers=headers
-        ).raise_for_status().json()
+        response = (
+            httpx.post(f"{self.base_url}/auth", json=payload, headers=headers)
+            .raise_for_status()
+            .json()
+        )
 
-        return response['token']
+        return response["token"]
 
     def logout(self, token: str) -> None:
         """
@@ -54,7 +59,4 @@ class Auth:
             "Authorization": f"Bearer {token}",
         }
 
-        httpx.post(
-            f"{self.base_url}/logout",
-            headers=headers
-        ).raise_for_status()
+        httpx.post(f"{self.base_url}/logout", headers=headers).raise_for_status()

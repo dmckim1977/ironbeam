@@ -16,8 +16,8 @@ print(client.token)
 # Use client...
 client.logout()
 
-# # Context manager usage
-# with ib.Ironbeam(apikey=os.getenv("IRONBEAM_APIKEY")) as client:
-#     client.authorize(username=os.getenv("IRONBEAM_USERNAME"))
-#     # Use client...
-#     # Auto logout on exit
+# Context manager usage
+with ib.Ironbeam(apikey=os.getenv("IRONBEAM_APIKEY")) as client:
+    client.authorize(username=os.getenv("IRONBEAM_USERNAME"))
+    # Use client...
+    # Auto logout on exit
