@@ -65,4 +65,4 @@ trades = client.market.get_trades(
 
 # Convert to DataFrame
 df = trades.to_pandas()
-print(df)
+print(df.tail())
